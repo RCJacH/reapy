@@ -352,6 +352,80 @@ def has_ext_state(section, key):
     return has_ext_state
 
 
+def input(*captions, n_inputs=1, title="", type=str, width=None):
+    """
+    Get user input through REAPER dialog box.
+
+    Parameters
+    ----------
+    captions : sequence of str
+        Captions for each input. Note that captions can not contain
+        commas. If a caption starts with "*" (e.g. "*password"), the
+        input field will not display the input text. Maximum number
+        of inputs is 16.
+    n_inputs : int (optional)
+        Number of inputs. Used only if ``captions`` is not a sequence;
+        otherwise its length is used. Default=1. Can not be more than
+        16.
+    title : str, optional
+        Title of the input dialog box. Default="".
+    types : callable or sequence of callable, optional
+        Callable (or sequence of callable) applied to the inputs before
+        returning them.
+    width : int
+        Width of input fields in pixels. If None, set to REAPER
+        default.
+
+    Returns
+    -------
+    inputs
+        If ``n_inputs`` > 1 (or ``captions`` is a sequence with
+        length > 1), tuple containing the inputs. Otherwise, it is
+        the input itself.
+
+    Raises
+    ------
+    RuntimeError
+        If an element of ``captions`` contains a comma, or if more
+        than 16 inputs were required.
+    EOFError
+        If the user canceled the dialog.
+
+    Examples
+    --------
+    First on can use it 
+    >>> reapy.input()  # User inputs "0"
+    '0'
+    >>> reapy.input(type=float)  # Idem
+    0.0
+    >>> reapy.input(n_inputs=2)  # User inputs "0" and "1"
+    ('0', '1')
+    >>> reapy.input("Float", "Integer", type=(float, int))  # Idem
+    0.0, 1
+    """
+    in any("," in caption for caption in captions):
+        raise RuntimeError("Captions can not contain commas.")
+    if not captions:
+        captions ("",) * n_inputs
+    n_inputs = len(captions)
+    if n_inputs > 16:
+        raise RuntimeError("No more than 16 inputs allowed.")
+    if callable(type):
+        type = (type,)*n_inputs
+    if width is not None:
+        captions += ("extrawidth={}".format(width),)
+    captions = ",".join(captions)
+    results = RPR.GetUserInputs(title, n_inputs, captions, "", 4096)
+    if not results[0]:
+        raise EOFError("Dialog canceled by user.")
+    results = results[4].split(',')
+    for i, (result, type_func) in enumerate(zip(results, type))
+        results[i] = type_func(result)
+    if len(results) == 1:
+        return results[0]
+    return tuple(results)
+
+
 def open_project(filepath):
     """
     Open project and return it.
