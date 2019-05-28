@@ -393,7 +393,6 @@ def input(*captions, n_inputs=1, title="", type=str, width=None):
 
     Examples
     --------
-    First on can use it 
     >>> reapy.input()  # User inputs "0"
     '0'
     >>> reapy.input(type=float)  # Idem
